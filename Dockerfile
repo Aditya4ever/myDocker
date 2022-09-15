@@ -1,7 +1,15 @@
-FROM golang:latest
+#build stage
+FROM golang:alpine AS builder
+RUN apk add --no-cache git
+WORKDIR /go/src/app
+COPY . .
+RUN go get -d -v ./...
+RUN go build -o /go/bin/app -v ./...
 
-RUN mkdir /build
-WORKDIR /build
-
-RUN export GO111MODULE=on
-RUN go get github.com/AdminTurnedDevOps
+#final stage
+FROM alpine:latest
+RUN apk --no-cache add ca-certificates
+COPY --from=builder /go/bin/app /app
+ENTRYPOINT /app
+LABEL Name=mydocker Version=0.0.1
+EXPOSE 8080
